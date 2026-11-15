@@ -1,0 +1,11 @@
+"""create budgets goals and recurring schedules"""
+from alembic import op
+import sqlalchemy as sa
+revision="20261114_08"; down_revision="20261114_07"; branch_labels=None; depends_on=None
+def upgrade():
+ u=sa.Uuid(); m=sa.Numeric(14,2)
+ op.create_table("budgets",sa.Column("id",u,primary_key=True),sa.Column("household_id",u,sa.ForeignKey("households.id",ondelete="CASCADE"),nullable=False),sa.Column("member_id",u,sa.ForeignKey("household_members.id",ondelete="CASCADE")),sa.Column("category_id",u,sa.ForeignKey("transaction_categories.id",ondelete="CASCADE")),sa.Column("name",sa.String(150),nullable=False),sa.Column("amount",m,nullable=False),sa.Column("period_start",sa.Date(),nullable=False),sa.Column("period_end",sa.Date(),nullable=False),sa.Column("created_at",sa.DateTime(timezone=True),server_default=sa.func.now()))
+ op.create_table("financial_goals",sa.Column("id",u,primary_key=True),sa.Column("household_id",u,sa.ForeignKey("households.id",ondelete="CASCADE"),nullable=False),sa.Column("member_id",u,sa.ForeignKey("household_members.id",ondelete="CASCADE")),sa.Column("name",sa.String(150),nullable=False),sa.Column("goal_type",sa.String(40),nullable=False),sa.Column("target_amount",m,nullable=False),sa.Column("target_date",sa.Date()),sa.Column("current_amount",m,server_default="0"),sa.Column("is_active",sa.Boolean(),server_default=sa.true()))
+ op.create_table("recurring_transactions",sa.Column("id",u,primary_key=True),sa.Column("household_id",u,sa.ForeignKey("households.id",ondelete="CASCADE"),nullable=False),sa.Column("member_id",u,sa.ForeignKey("household_members.id",ondelete="RESTRICT"),nullable=False),sa.Column("category_id",u,sa.ForeignKey("transaction_categories.id",ondelete="RESTRICT"),nullable=False),sa.Column("name",sa.String(150),nullable=False),sa.Column("transaction_type",sa.String(30),nullable=False),sa.Column("amount",m,nullable=False),sa.Column("frequency",sa.String(20),nullable=False),sa.Column("next_run_date",sa.Date(),nullable=False),sa.Column("is_active",sa.Boolean(),server_default=sa.true()),sa.Column("last_generated_key",sa.String(100)),sa.Column("payload",sa.JSON()))
+def downgrade():
+ op.drop_table("recurring_transactions"); op.drop_table("financial_goals"); op.drop_table("budgets")

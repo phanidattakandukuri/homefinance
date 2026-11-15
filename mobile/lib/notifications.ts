@@ -1,0 +1,3 @@
+import * as Notifications from "expo-notifications";
+export async function enableNotifications(){const p=await Notifications.getPermissionsAsync();if(!p.granted)await Notifications.requestPermissionsAsync();Notifications.setNotificationHandler({handleNotification:async()=>({shouldShowAlert:true,shouldPlaySound:false,shouldSetBadge:false})});}
+export async function scheduleReminder(title:string,body:string,date:Date){return Notifications.scheduleNotificationAsync({content:{title,body},trigger:{type:Notifications.SchedulableTriggerInputTypes.DATE,date}})}

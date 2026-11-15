@@ -1,0 +1,9 @@
+import * as SQLite from "expo-sqlite";
+import * as Network from "expo-network";
+import {api} from "./api";
+const dbPromise=SQLite.openDatabaseAsync("homefin-offline.db");
+export type Pending={local_id:number;server_id?:string;operation_type:string;payload:string;created_at:string;sync_status:string;retry_count:number;last_error?:string};
+export async function initOffline(){const db=await dbPromise;await db.execAsync(`CREATE TABLE IF NOT EXISTS transaction_queue (local_id INTEGER PRIMARY KEY AUTOINCREMENT, server_id TEXT, operation_type TEXT NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL, sync_status TEXT NOT NULL, retry_count INTEGER NOT NULL DEFAULT 0, last_error TEXT); CREATE TABLE IF NOT EXISTS cached_transactions (server_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL);`)}
+export async function queueTransaction(payload:Record<string,unknown>){const db=await dbPromise;await initOffline();await db.runAsync("INSERT INTO transaction_queue (operation_type,payload,created_at,sync_status) VALUES (?,?,?,?)","create",JSON.stringify(payload),new Date().toISOString(),"pending")}
+export async function pending(){const db=await dbPromise;return db.getAllAsync<Pending>("SELECT * FROM transaction_queue WHERE sync_status IN ('pending','retry') ORDER BY local_id")}
+export async function syncQueue(householdId:string){if((await Network.getNetworkStateAsync()).isConnected!==true)return;for(const item of await pending()){const db=await dbPromise;try{const result=await api.createTransaction(householdId,JSON.parse(item.payload),item.local_id.toString());await db.runAsync("UPDATE transaction_queue SET sync_status='synced',server_id=? WHERE local_id=?",(result as any).id,item.local_id)}catch(e){await db.runAsync("UPDATE transaction_queue SET sync_status='retry',retry_count=retry_count+1,last_error=? WHERE local_id=?",(e as Error).message,item.local_id)}}}
