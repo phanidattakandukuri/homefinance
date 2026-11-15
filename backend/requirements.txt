@@ -1,1 +1,37 @@
--e .
+# HomeFin AI backend - Render/runtime dependencies
+# Python compatibility: 3.12.x
+# Render build command: pip install --upgrade pip && pip install -r requirements.txt
+# Render start command: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+
+# Web API and ASGI server
+fastapi>=0.115,<1.0
+starlette>=0.40,<1.0
+uvicorn[standard]>=0.32,<1.0
+
+# Configuration and validation
+pydantic>=2.10,<3.0
+pydantic-settings>=2.6,<3.0
+email-validator>=2.2,<3.0
+python-multipart>=0.0.20,<1.0
+
+# PostgreSQL, SQLAlchemy, and migrations
+SQLAlchemy>=2.0,<3.0
+alembic>=1.13,<2.0
+psycopg[binary]>=3.2,<4.0
+
+# Authentication and password hashing
+PyJWT>=2.9,<3.0
+argon2-cffi>=23.1,<26.0
+
+# Receipt/document processing and OCR
+Pillow>=10,<13
+PyMuPDF>=1.24,<2.0
+pytesseract>=0.3.13,<1.0
+pdfplumber>=0.11,<1.0
+
+# Optional Gemini assistant integration
+google-genai>=1.0,<2.0
+
+# Backend tests
+pytest>=8.3,<9.0
+httpx>=0.27,<1.0
