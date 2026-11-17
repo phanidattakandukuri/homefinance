@@ -185,6 +185,7 @@ export const api = {
   resetPassword: (body: { reset_token: string; new_password: string }) => request<void>("/auth/password/reset", { method: "POST", body: JSON.stringify(body) }),
   acceptInvitation: (body: { invitation_token: string; full_name: string; password: string }) => request<User>("/auth/invitations/accept", { method: "POST", body: JSON.stringify(body) }),
   createHousehold: (body: HouseholdPayload) => request<Household>("/households", { method: "POST", body: JSON.stringify(body) }),
+  myHouseholds: () => request<Household[]>("/households"),
   household: (id: string) => request<Household>(`/households/${id}`),
   members: (id: string) => request<Member[]>(`/households/${id}/members`),
   dashboard: (id: string) => request<Dashboard>(`/households/${id}/analytics/household`),

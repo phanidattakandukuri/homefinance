@@ -13,6 +13,11 @@ from app.schemas.household import HouseholdCreate, HouseholdResponse, HouseholdU
 
 router = APIRouter(prefix="/households", tags=["households"])
 
+@router.get("", response_model=list[HouseholdResponse])
+def list_my_households(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    memberships = db.scalars(select(HouseholdMember).where(HouseholdMember.user_id == user.id, HouseholdMember.membership_status == "active")).all()
+    return [get_household(member.household_id, db) for member in memberships]
+
 @router.post("", response_model=HouseholdResponse, status_code=201)
 def create_household(payload: HouseholdCreate, user: User = Depends(current_user), db: Session = Depends(get_db)):
     household = Household(name=payload.name, base_currency=payload.base_currency.upper(), timezone=payload.timezone)

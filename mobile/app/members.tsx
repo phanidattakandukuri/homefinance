@@ -7,13 +7,14 @@ import { useHousehold } from "@/lib/household";
 
 export default function Members() {
   const id = useHousehold((s) => s.householdId);
+  const householdHydrated = useHousehold((s) => s.hydrated);
   const [joinCode, setJoinCode] = useState("");
   const [selected, setSelected] = useState<Member>();
   const [editName, setEditName] = useState("");
   const [occupation, setOccupation] = useState("");
-  const q = useQuery({ queryKey: ["members", id], queryFn: () => api.members(id!), enabled: !!id });
+  const q = useQuery({ queryKey: ["members", id], queryFn: () => api.members(id!), enabled: householdHydrated && !!id });
   const generate = useMutation({
-    mutationFn: () => api.createJoinCode(id!),
+    mutationFn: () => { if (!id) throw new Error("No household is selected. Create or join a household first."); return api.createJoinCode(id); },
     onSuccess: (result) => setJoinCode(result.code),
   });
   const update = useMutation({
@@ -34,7 +35,9 @@ export default function Members() {
     </> : null}
     <FieldLabel>Link another logged-in family member</FieldLabel>
     <Text style={styles.muted}>Generate a temporary code and share it privately. They enter it during onboarding; no email or member ID is needed.</Text>
-    <ActionButton title={generate.isPending ? "Generating code..." : "Generate household code"} disabled={generate.isPending} onPress={() => void generate.mutateAsync()} />
+    {!householdHydrated ? <Text style={styles.muted}>Loading household…</Text> : null}
+    {!id && householdHydrated ? <Text style={styles.error}>No household is selected. Return to onboarding to create or join one.</Text> : null}
+    <ActionButton title={generate.isPending ? "Generating code..." : "Generate household code"} disabled={!id || generate.isPending} onPress={() => void generate.mutateAsync()} />
     {joinCode ? <Text style={styles.card}>Share this code: {joinCode}</Text> : null}
     <ActionButton title="Refresh" secondary onPress={() => void q.refetch()} />
   </Screen>;

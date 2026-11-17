@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api, clearTokens, persistTokens, restoreTokens, TokenPair, User } from "./api";
+import { useHousehold } from "./household";
 
 type AuthState = {
   user?: User;
@@ -22,6 +23,8 @@ export const useAuth = create<AuthState>((set) => ({
       if (!tokens) return;
       const user = await api.me();
       set({ tokens, user });
+      const households = await api.myHouseholds();
+      if (households[0]) await useHousehold.getState().setHouseholdId(households[0].id);
     } catch {
       await clearTokens();
     } finally {
@@ -35,8 +38,11 @@ export const useAuth = create<AuthState>((set) => ({
       await persistTokens(tokens);
       const user = await api.me();
       set({ tokens, user });
+      const households = await api.myHouseholds();
+      if (households[0]) await useHousehold.getState().setHouseholdId(households[0].id);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : "Unable to log in." });
+      await clearTokens();
+      set({ tokens: undefined, user: undefined, error: error instanceof Error ? error.message : "Unable to log in." });
       throw error;
     } finally {
       set({ loading: false });
@@ -44,6 +50,7 @@ export const useAuth = create<AuthState>((set) => ({
   },
   async logout() {
     await clearTokens();
+    await useHousehold.getState().clear();
     set({ tokens: undefined, user: undefined, error: undefined });
   },
   clearError: () => set({ error: undefined }),
