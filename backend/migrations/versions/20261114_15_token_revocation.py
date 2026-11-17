@@ -8,7 +8,10 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    op.add_column("users", sa.Column("token_version", sa.Integer(), nullable=False, server_default="0"))
+    op.execute(
+        "ALTER TABLE users "
+        "ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0"
+    )
 
 def downgrade():
-    op.drop_column("users", "token_version")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS token_version")
