@@ -7,6 +7,9 @@ class ExtractionResult(BaseModel):
 class DocumentResponse(BaseModel):
     id: UUID; original_filename: str; mime_type: str; size_bytes: int; document_type: str; status: str
     model_config = {"from_attributes": True}
+class OCRJobResponse(BaseModel):
+    id: UUID; document_id: UUID; status: str; attempts: int; last_error: str | None = None
+    model_config = {"from_attributes": True}
 class ExtractionCorrection(BaseModel):
     amount: Decimal | None = None; transaction_date: date | None = None; merchant: str | None = None; member_id: UUID | None = None; category_id: UUID | None = None
 class ConfirmationResponse(BaseModel):

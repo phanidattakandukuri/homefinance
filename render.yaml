@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: homefin-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /api/v1/health
+  - type: cron
+    name: homefin-recurring-transactions
+    runtime: python
+    rootDir: backend
+    schedule: "0 * * * *"
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: python -m app.jobs.run_recurring
+  - type: cron
+    name: homefin-ocr-worker
+    runtime: python
+    rootDir: backend
+    schedule: "*/5 * * * *"
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: python -m app.jobs.run_ocr

@@ -15,18 +15,51 @@ class HouseholdUpdate(BaseModel):
 class MemberCreate(BaseModel):
     display_name: str = Field(min_length=1, max_length=200)
     user_id: UUID | None = None
+    email: str | None = None
+    phone: str | None = None
+    relationship_to_household: str | None = None
+    employment_status: str | None = None
+    occupation: str | None = None
+    profile_image_url: str | None = None
     role: str = "member"
 
-class MemberRoleUpdate(BaseModel):
-    role: str
+class MemberUpdate(BaseModel):
+    display_name: str | None = Field(default=None, min_length=1, max_length=200)
+    email: str | None = None
+    phone: str | None = None
+    relationship_to_household: str | None = None
+    employment_status: str | None = None
+    occupation: str | None = None
+    profile_image_url: str | None = None
+    role: str | None = None
+    membership_status: str | None = None
 
 class MemberResponse(BaseModel):
     id: UUID
     user_id: UUID | None
     display_name: str
+    email: str | None
+    phone: str | None
+    relationship_to_household: str | None
+    employment_status: str | None
+    occupation: str | None
+    profile_image_url: str | None
     role: str
     membership_status: str
     model_config = {"from_attributes": True}
+
+class InvitationCreate(BaseModel):
+    email: str
+    display_name: str = Field(min_length=1, max_length=200)
+    role: str = "member"
+    relationship_to_household: str | None = None
+
+class InvitationResponse(BaseModel):
+    invitation_id: UUID
+    member_id: UUID
+    email: str
+    expires_at: str
+    invitation_token: str
 
 class HouseholdResponse(BaseModel):
     id: UUID

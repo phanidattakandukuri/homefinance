@@ -36,3 +36,25 @@ records, and upload/OCR/investment-specific mobile flows remain disabled
 instead of fabricating success or financial values. Expo Go device testing
 requires setting `EXPO_PUBLIC_API_BASE_URL` to the development computer's LAN
 address.
+
+## Phase 11 - member profiles and ownership-aware wealth foundation
+
+Status: in progress.
+
+Migration `20261114_10` adds household member profile fields and member detail,
+update, and deactivation support. Deactivation preserves historical records.
+Authenticated password-change support is also available.
+
+Migration `20261114_11` adds asset ownership percentages, asset locations, loan
+lender/interest/frequency/EMI metadata, associated assets, and principal/
+interest payment history. Personal analytics now filters wealth and salary
+records by member and applies asset ownership percentages.
+
+Python compilation, Alembic head discovery, and all current backend tests pass.
+Invitation linking, manual PF/gratuity ledgers, and tested XIRR/EMI
+calculation primitives are implemented. Migrations through `20261114_19` now
+also cover complete categories, server-side JWT revocation, transaction audit
+visibility, and password-reset tokens. Complete mobile wealth editing,
+market-data integrations and richer mobile wealth workflows remain in
+progress. OCR now has persisted jobs and retry metadata; a dedicated worker
+remains a deployment-scale improvement.

@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Text, TextInput } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -25,6 +25,8 @@ const schema = z.object({
     .refine((value) => Number(value) > 0, "Enter an amount greater than zero."),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD."),
   merchant: z.string().optional(),
+  memberId: z.string().min(1, "Select a member."),
+  categoryId: z.string().min(1, "Select a category."),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -48,6 +50,8 @@ export default function Transaction() {
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -56,16 +60,21 @@ export default function Transaction() {
       amount: "",
       date: new Date().toISOString().slice(0, 10),
       merchant: "",
+        memberId: "",
+        categoryId: "",
     },
   });
 
   const [error, setError] = useState<Error>();
+  const type = watch("type");
+  const memberId = watch("memberId");
+  const categoryId = watch("categoryId");
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
       const body = {
-        member_id: members.data?.[0]?.id || "",
-        category_id: categories.data?.[0]?.id || "",
+        member_id: values.memberId,
+        category_id: values.categoryId,
         transaction_type: values.type,
         amount: values.amount,
         currency: "INR",
@@ -114,21 +123,33 @@ export default function Transaction() {
 
       <FieldLabel>Type (income or expense)</FieldLabel>
 
-      <Controller
-        control={control}
-        name="type"
-        render={({ field }) => (
-          <TextInput
-            style={styles.input}
-            value={field.value}
-            onChangeText={(value) =>
-              field.onChange(value === "income" ? "income" : "expense")
-            }
-          />
-        )}
-      />
+      <View style={styles.chipRow}>
+        {(["expense", "income"] as const).map((value) => (
+          <Pressable key={value} onPress={() => { setValue("type", value); setValue("categoryId", ""); }} style={[styles.chip, type === value && styles.selectedChip]}>
+            <Text style={styles.chipText}>{value === "income" ? "Income" : "Expense"}</Text>
+          </Pressable>
+        ))}
+      </View>
 
-      {errors.type && <Text style={styles.error}>{errors.type.message}</Text>}
+      <FieldLabel>Household member</FieldLabel>
+      <View style={styles.chipRow}>
+        {members.data?.map((member) => (
+          <Pressable key={member.id} onPress={() => setValue("memberId", member.id)} style={[styles.chip, memberId === member.id && styles.selectedChip]}>
+            <Text style={styles.chipText}>{member.display_name}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {errors.memberId && <Text style={styles.error}>{errors.memberId.message}</Text>}
+
+      <FieldLabel>Category</FieldLabel>
+      <View style={styles.chipRow}>
+        {categories.data?.filter((category) => category.category_type === type || category.category_type === "other").map((category) => (
+          <Pressable key={category.id} onPress={() => setValue("categoryId", category.id)} style={[styles.chip, categoryId === category.id && styles.selectedChip]}>
+            <Text style={styles.chipText}>{category.name}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {errors.categoryId && <Text style={styles.error}>{errors.categoryId.message}</Text>}
 
       <FieldLabel>Amount</FieldLabel>
 

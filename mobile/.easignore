@@ -1,0 +1,19 @@
+# The EAS project is run from this mobile directory. Ignore parent/repo
+
+# artifacts that can cause Windows archive permission errors.
+
+../.pytest_cache/
+../.venv/
+../backend/
+../docs/
+../infrastructure/
+../.git/
+../.vscode/
+../.env
+../bruno.mjs
+node_modules/
+.expo/
+dist/
+.env
+.env.\*
+!.env.example

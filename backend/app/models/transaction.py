@@ -10,6 +10,7 @@ class Category(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     household_id: Mapped[UUID | None] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(100))
+    category_type: Mapped[str] = mapped_column(String(20), default="expense", index=True)
     parent_id: Mapped[UUID | None] = mapped_column(ForeignKey("transaction_categories.id", ondelete="CASCADE"))
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

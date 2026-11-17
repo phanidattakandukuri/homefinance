@@ -1,12 +1,14 @@
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+CATEGORY_TYPES = {"income", "expense", "transfer", "investment", "debt", "other"}
 TRANSACTION_TYPES = {"income", "expense", "transfer", "investment_contribution", "investment_redemption", "debt_payment", "refund", "interest", "dividend", "adjustment"}
 
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+    category_type: str = Field(default="expense", pattern="^(income|expense|transfer|investment|debt|other)$")
     parent_id: UUID | None = None
 
 class CategoryResponse(CategoryCreate):
@@ -29,6 +31,26 @@ class TransactionCreate(BaseModel):
     reference_number: str | None = None
     linked_transaction_id: UUID | None = None
 
+    @model_validator(mode="after")
+    def validate_transaction(self):
+        if self.transaction_type not in TRANSACTION_TYPES:
+            raise ValueError("Unsupported transaction type")
+        if self.amount <= 0:
+            raise ValueError("Amount must be greater than zero")
+        if self.currency != self.currency.upper():
+            raise ValueError("Currency must use uppercase ISO format")
+        return self
+
+class TransferCreate(BaseModel):
+    from_member_id: UUID
+    to_member_id: UUID
+    category_id: UUID
+    amount: Decimal = Field(gt=0)
+    currency: str = Field(default="INR", min_length=3, max_length=3)
+    transaction_date: date
+    description: str | None = None
+    notes: str | None = None
+
 class TransactionUpdate(BaseModel):
     category_id: UUID | None = None
     amount: Decimal | None = Field(default=None, gt=0)
@@ -47,3 +69,12 @@ class TransactionResponse(TransactionCreate):
 class DuplicateWarning(BaseModel):
     possible_duplicates: list[TransactionResponse]
     warning: str
+
+class TransactionAuditResponse(BaseModel):
+    id: UUID
+    transaction_id: UUID
+    changed_by_user_id: UUID
+    action: str
+    details: str | None
+    created_at: str
+    model_config = {"from_attributes": True}

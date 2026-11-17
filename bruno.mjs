@@ -22,12 +22,14 @@ let householdId;
 let ownerMemberId;
 let sampleMemberId;
 let categoryId;
+let transferCategoryId;
 let transactionId;
 let salaryId;
 let budgetId;
 let investmentId;
 let instrumentId;
 let documentId;
+let liabilityId;
 
 async function request(method, path, body, options = {}) {
   const headers = { ...(options.headers || {}) };
@@ -87,6 +89,8 @@ async function main() {
   // Categories and transactions
   const category = await request("POST", `/households/${householdId}/categories`, { name: "Bruno Groceries" });
   categoryId = category.id;
+  const transferCategory = await request("POST", `/households/${householdId}/categories`, { name: "Bruno Transfers", category_type: "transfer" });
+  transferCategoryId = transferCategory.id;
   await request("GET", `/households/${householdId}/categories`);
   const transaction = await request("POST", `/households/${householdId}/transactions`, {
     member_id: ownerMemberId, category_id: categoryId, transaction_type: "expense",
@@ -98,7 +102,9 @@ async function main() {
   transactionId = transaction.id;
   await request("GET", `/households/${householdId}/transactions?transaction_type=expense&page=1&page_size=50&search=Sample`);
   await request("GET", `/households/${householdId}/transactions/${transactionId}/duplicates`);
+  await request("GET", `/households/${householdId}/transactions/${transactionId}/audit`);
   await request("PATCH", `/households/${householdId}/transactions/${transactionId}`, { notes: "Updated sample note" });
+  await request("POST", `/households/${householdId}/transfers`, { from_member_id: ownerMemberId, to_member_id: sampleMemberId, category_id: transferCategoryId, amount: 1000, currency: "INR", transaction_date: "2026-01-16", description: "Sample household transfer" });
 
   // Salary
   const salary = await request("POST", `/households/${householdId}/members/${ownerMemberId}/salary`, {
@@ -128,6 +134,7 @@ async function main() {
   investmentId = investment.id;
   await request("GET", `/households/${householdId}/wealth/instruments`);
   await request("GET", `/households/${householdId}/wealth/investments`);
+  await request("GET", `/households/${householdId}/wealth/investments/${investmentId}/performance`);
   await request("POST", `/households/${householdId}/wealth/investments/${investmentId}/transactions`, {
     transaction_type: "buy", quantity: 10, unit_price: 250, fees: 5, cash_flow: 2505,
     transaction_date: "2026-01-10", notes: "Sample purchase",
@@ -141,12 +148,24 @@ async function main() {
     acquisition_cost: 100000, current_value: 100000, acquisition_date: "2026-01-01", valuation_date: "2026-01-31",
   });
   await request("GET", `/households/${householdId}/wealth/assets`);
-  await request("POST", `/households/${householdId}/wealth/liabilities`, {
+  const liability = await request("POST", `/households/${householdId}/wealth/liabilities`, {
     member_id: ownerMemberId, name: "Sample Home Loan", category: "mortgage",
-    original_principal: 5000000, current_outstanding: 4750000, interest_rate: 8.5, emi: 45000,
+    original_principal: 5000000, current_outstanding: 4750000, interest_rate: 8.5, emi: 45000, remaining_tenure_months: 180,
     start_date: "2025-01-01", end_date: "2045-01-01",
   });
+  liabilityId = liability.id;
   await request("GET", `/households/${householdId}/wealth/liabilities`);
+  await request("POST", `/households/${householdId}/wealth/liabilities/${liabilityId}/payments`, { payment_date: "2026-01-05", amount: 45000, principal: 11000, interest: 34000, notes: "Sample EMI" });
+  await request("GET", `/households/${householdId}/wealth/liabilities/${liabilityId}/payments`);
+  await request("GET", `/households/${householdId}/wealth/liabilities/${liabilityId}/schedule`);
+
+  // PF and gratuity manual ledgers
+  const pf = await request("POST", `/households/${householdId}/pf/accounts`, { member_id: ownerMemberId, scheme: "EPF", opening_balance: 100000, current_balance: 120000 });
+  await request("GET", `/households/${householdId}/pf/accounts`);
+  await request("POST", `/households/${householdId}/pf/accounts/${pf.id}/entries`, { entry_date: "2026-01-31", entry_type: "contribution", employee_contribution: 9000, employer_contribution: 9000, interest_credited: 500 });
+  await request("GET", `/households/${householdId}/pf/accounts/${pf.id}/entries`);
+  await request("POST", `/households/${householdId}/pf/gratuity`, { member_id: ownerMemberId, joining_date: "2020-01-01", basic_salary: 75000, da_salary: 5000 });
+  await request("GET", `/households/${householdId}/pf/gratuity`);
 
   // Planning
   const budget = await request("POST", `/households/${householdId}/budgets`, {
@@ -167,6 +186,7 @@ async function main() {
     payload: { source: "bruno" },
   });
   await request("GET", `/households/${householdId}/recurring`);
+  await request("POST", `/households/${householdId}/recurring/run-due?as_of=2026-02-01`);
 
   // Analytics and assistant
   await request("GET", `/households/${householdId}/analytics/household?period_type=calendar_year`);
@@ -177,6 +197,11 @@ async function main() {
     question: "Summarize my household spending, investments, and net worth.",
     start: "2026-01-01", end: "2026-01-31",
   });
+  await request("GET", `/households/${householdId}/analytics/export/transactions.csv?start=2026-01-01&end=2026-01-31`);
+
+  // Invitation lifecycle (token is returned for secure manual delivery in development).
+  const invitation = await request("POST", `/households/${householdId}/invitations`, { email: `invite-${runId}@example.test`, display_name: "Invited Bruno Member", role: "member" });
+  await request("POST", "/auth/invitations/accept", { invitation_token: invitation.invitation_token, full_name: "Invited Bruno Member", password: "InvitedSamplePassword123!" });
 
   // Documents: valid tiny PNG; OCR/extraction may remain unavailable when no OCR provider is configured.
   const form = new FormData();

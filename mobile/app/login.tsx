@@ -17,6 +17,7 @@ export default function Login() {
     <FieldLabel>Password</FieldLabel><TextInput accessibilityLabel="Password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
     <State error={error ? new Error(error) : undefined} loading={loading} />
     <ActionButton title="Log in" disabled={loading || !email || !password} onPress={() => void submit()} />
+    <ActionButton title="Forgot password" secondary onPress={() => router.push("/reset-password")} />
     <ActionButton title="Create account" secondary onPress={() => router.push("/register")} />
   </Screen>;
 }

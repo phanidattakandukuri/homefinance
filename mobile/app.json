@@ -10,13 +10,27 @@
       "expo-secure-store",
       "expo-camera",
       "expo-notifications",
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "package": "com.homefin.ai"
-    }
+      "package": "com.homefin.ai",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "f74086f5-5644-4456-a54c-c86f2b9bc502"
+      }
+    },
+    "owner": "devphani"
   }
 }

@@ -1,5 +1,11 @@
 # Production deployment and recovery
 
+`render.yaml` defines the API service and an hourly Render cron job. The cron
+executes `python -m app.jobs.run_recurring`, which processes due recurring
+transactions for all households using the same idempotency keys as the API.
+It also defines a five-minute OCR worker running `python -m app.jobs.run_ocr`
+to drain persisted queued and retryable OCR jobs.
+
 Production must use a managed PostgreSQL provider or a private PostgreSQL
 network. Do not publish port 5432 to the internet. Restrict database access to
 the backend network, enable provider encryption, automated backups, retention,

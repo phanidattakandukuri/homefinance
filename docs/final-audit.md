@@ -1,22 +1,28 @@
 # HomeFin AI final audit
 
-Audit date: 2026-11-14. Scope: repository source, configuration, migrations,
-backend tests, and mobile TypeScript checks. This is a code audit, not proof of
+Audit date: 2026-11-16. Scope: repository source, configuration, migrations,
+backend tests, and mobile TypeScript/bundle checks. This is a code audit, not proof of
 an external production deployment.
 
 ## Tested
 
 - Backend Python compilation: passed.
-- Backend pytest suite: `1 passed` (only the existing health test).
-- Mobile TypeScript check from `mobile`: passed after installing `expo-network`.
+- Backend pytest suite: `12 passed`.
+- Mobile TypeScript check from `mobile`: passed.
+- Android Expo embed bundle: passed.
 - API route registration: verified for authentication, transactions, documents,
-  wealth, analytics, assistant, budgets, goals, and recurring schedules.
+  wealth, provident-fund/gratuity, analytics, assistant, budgets, goals,
+  recurring schedules, exports, and password-reset flows.
 - Compose health/startup was previously verified locally; port 5432 was occupied
   and PostgreSQL was tested on configurable port 55432.
 
 ## Critical findings
 
-None fixed in this audit.
+Member profiles, invitation linking, transaction privacy, typed wealth records,
+PF/gratuity ledgers, transfer accounting, XIRR/EMI primitives, recurring
+generation, CSV/XLSX/PDF transaction export, password reset, and token revocation were
+  notification preferences, and persisted OCR jobs were implemented with
+  Alembic migrations through `20261114_19`.
 
 ## High findings
 
@@ -25,22 +31,28 @@ None fixed in this audit.
 - The test suite does not cover financial reconciliation, household isolation,
   role escalation, token expiry, upload signatures, offline retries, or backup
   restore. The application must not be called production-ready on this evidence.
-- OAuth/JWT refresh tokens are stateless and logout does not revoke an already
-  issued token. Add token versioning or a server-side revocation store before
-  production use.
+- JWT access and refresh tokens use server-side per-user token versioning;
+  logout and password changes revoke previously issued tokens. Password-reset
+  tokens are one-time, hashed, and expiring. A distributed session store may
+  still be needed for independent multi-device revocation.
 - Rate limiting is process-local and unsuitable as the sole control with multiple
   workers. Put a gateway or Redis-backed limiter in front of production.
 
 ## Medium findings
 
-- XIRR is not implemented; investment returns currently expose absolute and
-  realized/unrealized foundations only.
-- EPF/EPS passbook ingestion and separate EPS balance calculations are not complete.
-- Report PDF/Excel/CSV export is not implemented; analytics JSON is available.
-- Recurring schedules are stored and reviewable, but a production scheduler and
-  notification delivery are not implemented.
-- OCR uses FastAPI background tasks rather than durable Celery/Redis jobs; a
-  process crash can lose an in-flight OCR task.
+- XIRR and EMI calculation primitives are implemented and exposed through
+  investment performance and loan schedule endpoints; input completeness still
+  determines whether a result is available.
+- EPF/EPS account types and separate EPS contribution/balance calculations are
+  implemented; automated EPFO passbook ingestion remains future work.
+- Transaction CSV, XLSX, and paginated PDF exports are implemented.
+- Recurring schedules can be generated through an idempotent `run-due` endpoint
+  and the Render cron runner in `app.jobs.run_recurring`; notification
+  preferences are persisted per household/user, while provider delivery remains
+  deployment work.
+- OCR jobs now have persisted status, attempt counts, failure details, and a
+  retry endpoint. The current execution path still uses FastAPI background
+  tasks; a worker/cron is recommended to drain queued jobs at scale.
 - Monthly snapshots have creation metadata but controlled recalculation/audit
   workflow is incomplete.
 - The local rate limiter and local upload storage are development safeguards only.
@@ -56,11 +68,10 @@ None fixed in this audit.
 
 ## Financial review conclusion
 
-The repository has Decimal-backed records and explicit transaction types, but no
-independent reconciliation test dataset was present and no XIRR implementation
-exists. Transfers, investment contributions, and loan principal treatment are
-encoded in analytics exclusions, but require dedicated fixture tests before
-trusting reports for family decisions.
+The repository has Decimal-backed records, explicit transaction types, linked
+transfers, ownership-aware analytics, XIRR/EMI services, and PF/gratuity
+ledgers. Independent database-fixture reconciliation and end-to-end isolation
+tests are still required before trusting reports for family decisions.
 
 ## Audit conclusion
 

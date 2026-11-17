@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, or_, and_
 from sqlalchemy.orm import Session
-from app.api.v1.dependencies import current_user, household_member
+from app.api.v1.dependencies import authorize_member_view, current_user, household_member
 from app.db.session import get_db
 from app.models.auth import User
 from app.models.salary import SalaryAudit, SalaryRecord
@@ -13,7 +13,7 @@ from app.services.salary import breakdown
 router = APIRouter(prefix="/households/{household_id}/members/{member_id}/salary", tags=["salary"])
 
 def member_check(household_id, member_id, user, db):
-    actor = household_member(household_id, db, user)
+    actor = authorize_member_view(household_id, member_id, db, user)
     member = db.get(__import__('app.models.household', fromlist=['HouseholdMember']).HouseholdMember, member_id)
     if not member or member.household_id != household_id: raise HTTPException(404, "Member not found")
     return actor, member

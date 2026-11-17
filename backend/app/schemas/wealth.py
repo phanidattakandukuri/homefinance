@@ -8,6 +8,40 @@ class InvestmentCreate(BaseModel): member_id: UUID; instrument_id: UUID; notes: 
 class InvestmentResponse(InvestmentCreate): id: UUID; household_id: UUID; model_config = {"from_attributes": True}
 class InvestmentTransactionCreate(BaseModel): transaction_type: str; quantity: Decimal | None = None; unit_price: Decimal | None = None; fees: Decimal = Field(default=0, ge=0); cash_flow: Decimal; transaction_date: date; source_document_id: UUID | None = None; notes: str | None = None
 class ValuationCreate(BaseModel): valuation_date: date; quantity: Decimal | None = None; unit_price: Decimal | None = None; current_value: Decimal; source: str = "manual"; notes: str | None = None
-class AssetCreate(BaseModel): member_id: UUID | None = None; name: str; category: str; acquisition_cost: Decimal | None = None; current_value: Decimal | None = None; acquisition_date: date | None = None; valuation_date: date | None = None; notes: str | None = None
-class LiabilityCreate(BaseModel): member_id: UUID | None = None; name: str; category: str; original_principal: Decimal | None = None; current_outstanding: Decimal | None = None; interest_rate: Decimal | None = None; emi: Decimal | None = None; start_date: date | None = None; end_date: date | None = None; notes: str | None = None
-class WealthResponse(BaseModel): id: UUID; model_config = {"from_attributes": True}
+class AssetCreate(BaseModel): member_id: UUID | None = None; name: str; category: str; acquisition_cost: Decimal | None = None; current_value: Decimal | None = None; ownership_percentage: Decimal = Field(default=100, ge=0, le=100); acquisition_date: date | None = None; valuation_date: date | None = None; location: str | None = None; notes: str | None = None
+class LiabilityCreate(BaseModel): member_id: UUID | None = None; name: str; category: str; lender: str | None = None; original_principal: Decimal | None = None; current_outstanding: Decimal | None = None; interest_rate: Decimal | None = Field(default=None, ge=0); interest_type: str = "fixed"; emi: Decimal | None = Field(default=None, ge=0); emi_frequency: str = "monthly"; start_date: date | None = None; end_date: date | None = None; next_emi_date: date | None = None; remaining_tenure_months: int | None = Field(default=None, ge=0); associated_asset_id: UUID | None = None; notes: str | None = None
+class WealthResponse(BaseModel):
+    id: UUID
+    model_config = {"from_attributes": True}
+
+class InvestmentTransactionResponse(InvestmentTransactionCreate):
+    id: UUID
+    investment_id: UUID
+    model_config = {"from_attributes": True}
+
+class ValuationResponse(ValuationCreate):
+    id: UUID
+    investment_id: UUID
+    model_config = {"from_attributes": True}
+
+class AssetResponse(AssetCreate):
+    id: UUID
+    household_id: UUID
+    model_config = {"from_attributes": True}
+
+class LiabilityResponse(LiabilityCreate):
+    id: UUID
+    household_id: UUID
+    model_config = {"from_attributes": True}
+
+class LiabilityPaymentCreate(BaseModel):
+    payment_date: date
+    amount: Decimal = Field(gt=0)
+    principal: Decimal | None = Field(default=None, ge=0)
+    interest: Decimal | None = Field(default=None, ge=0)
+    notes: str | None = None
+
+class LiabilityPaymentResponse(LiabilityPaymentCreate):
+    id: UUID
+    liability_id: UUID
+    model_config = {"from_attributes": True}

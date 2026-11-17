@@ -5,10 +5,13 @@ to Python `Decimal`; floating-point values are prohibited for financial data.
 Timestamps will be stored consistently and interpreted using each household's
 configured IANA timezone.
 
-Future schema work must use Alembic migrations. Financial records will carry a
+All schema work uses Alembic migrations. Financial records carry a
 household identifier and, where applicable, a member identifier. Transaction
 classification will distinguish transfers, card bill payments, investment
 contributions, redemptions, realized gains, and unrealized gains to prevent
 double counting.
 
-Phase 1 creates no financial tables yet.
+Current migrations include authentication/households, salary, transactions,
+documents, wealth, analytics, planning, member profiles, invitations, and
+manual PF/gratuity ledgers. Ownership percentages and linked transfer records
+are used to keep household and personal calculations reconcilable.

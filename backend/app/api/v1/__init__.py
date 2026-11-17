@@ -10,6 +10,8 @@ from app.api.v1.wealth import router as wealth_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.planning import router as planning_router
+from app.api.v1.pf import router as pf_router
+from app.api.v1.notifications import router as notifications_router
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(health_router)
@@ -22,3 +24,4 @@ router.include_router(wealth_router)
 router.include_router(analytics_router)
 router.include_router(assistant_router)
 router.include_router(planning_router)
+router.include_router(pf_router)

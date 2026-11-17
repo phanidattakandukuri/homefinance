@@ -1,0 +1,21 @@
+# EAS only needs the Expo mobile project.
+
+backend/
+docs/
+infrastructure/
+.venv/
+.pytest*cache/
+**/**pycache**/
+**/*.py[cod]
+\*\*/\_.egg-info/
+.vscode/
+.expo/
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/.env
+mobile/.env.\*
+.env
+.git/
+.codex/
+.agents/

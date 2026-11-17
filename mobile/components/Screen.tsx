@@ -42,6 +42,10 @@ export const styles = StyleSheet.create({
   muted: { color: colors.muted, lineHeight: 22 },
   state: { marginVertical: 16 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9, backgroundColor: colors.surface },
+  selectedChip: { backgroundColor: "#E6F3F7", borderColor: colors.primary },
+  chipText: { color: colors.ink, fontWeight: "600" },
   badge: { backgroundColor: "#E6F3F7", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   badgeText: { color: colors.primary, fontWeight: "600" },
 });
