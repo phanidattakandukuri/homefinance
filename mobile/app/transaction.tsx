@@ -22,7 +22,8 @@ const schema = z.object({
   amount: z
     .string()
     .trim()
-    .refine((value) => Number(value) > 0, "Enter an amount greater than zero."),
+    .transform((value) => value.replace(/[,\s₹$€£]/g, ""))
+    .refine((value) => /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0, "Enter an amount greater than zero."),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD."),
   merchant: z.string().optional(),
   memberId: z.string().min(1, "Select a member."),
@@ -171,7 +172,7 @@ export default function Transaction() {
             style={styles.input}
             keyboardType="decimal-pad"
             value={field.value}
-            onChangeText={field.onChange}
+            onChangeText={(value) => field.onChange(value.replace(/[^\d,.\s₹$€£]/g, ""))}
             placeholder="0.00"
           />
         )}

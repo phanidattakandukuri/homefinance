@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 CATEGORY_TYPES = {"income", "expense", "transfer", "investment", "debt", "other"}
 TRANSACTION_TYPES = {"income", "expense", "transfer", "investment_contribution", "investment_redemption", "debt_payment", "refund", "interest", "dividend", "adjustment"}
@@ -30,6 +30,13 @@ class TransactionCreate(BaseModel):
     source: str | None = None
     reference_number: str | None = None
     linked_transaction_id: UUID | None = None
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def normalize_amount(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.replace(",", "").replace(" ", "").replace("₹", "").replace("$", "").replace("€", "").replace("£", "")
+        return value
 
     @model_validator(mode="after")
     def validate_transaction(self):
