@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -66,6 +66,7 @@ export default function Transaction() {
   });
 
   const [error, setError] = useState<Error>();
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const type = watch("type");
   const memberId = watch("memberId");
   const categoryId = watch("categoryId");
@@ -142,13 +143,22 @@ export default function Transaction() {
       {errors.memberId && <Text style={styles.error}>{errors.memberId.message}</Text>}
 
       <FieldLabel>Category</FieldLabel>
-      <View style={styles.chipRow}>
-        {categories.data?.filter((category) => category.category_type === type || category.category_type === "other").map((category) => (
-          <Pressable key={category.id} onPress={() => setValue("categoryId", category.id)} style={[styles.chip, categoryId === category.id && styles.selectedChip]}>
-            <Text style={styles.chipText}>{category.name}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Choose category" onPress={() => setCategoryOpen(true)} style={styles.input}>
+        <Text style={categoryId ? styles.chipText : styles.muted}>{categories.data?.find((category) => category.id === categoryId)?.name ?? "Select a category"}</Text>
+      </Pressable>
+      <Modal visible={categoryOpen} transparent animationType="slide" onRequestClose={() => setCategoryOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.title}>Choose category</Text>
+            {(categories.data ?? []).filter((category) => category.category_type === type || category.category_type === "other").map((category) => (
+              <Pressable key={category.id} onPress={() => { setValue("categoryId", category.id); setCategoryOpen(false); }} style={styles.modalOption}>
+                <Text style={styles.chipText}>{category.name}</Text>
+              </Pressable>
+            ))}
+            <ActionButton title="Cancel" secondary onPress={() => setCategoryOpen(false)} />
+          </View>
+        </View>
+      </Modal>
       {errors.categoryId && <Text style={styles.error}>{errors.categoryId.message}</Text>}
 
       <FieldLabel>Amount</FieldLabel>

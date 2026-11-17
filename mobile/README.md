@@ -20,6 +20,10 @@ to the phone. Use the development computer's LAN address, for example
 `http://192.168.1.100:8000/api/v1`, and allow the backend port through the
 Windows firewall. For deployment, use the hosted HTTPS API URL.
 
+The deployed Render API URL must include the version prefix:
+`https://homefinance-x3ei.onrender.com/api/v1`. A host-only URL causes the
+mobile client to call paths that do not exist.
+
 The app exposes authentication, household onboarding, member invitations and
 editing, personal/household dashboards, analytics, transactions, assets,
 liabilities, and wealth summaries using real backend responses. Empty and

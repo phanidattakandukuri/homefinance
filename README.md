@@ -26,6 +26,12 @@ OpenAPI is available at `http://127.0.0.1:8000/docs` and
 `http://127.0.0.1:8000/openapi.json`. Run migrations from `backend` with
 `alembic upgrade head`; Alembic reads `DATABASE_URL` from the environment.
 
+Neon is a managed PostgreSQL provider, not a schema migration runner. Every
+deployment must run `alembic upgrade head` against the same `DATABASE_URL`.
+The Render configuration runs this command during both build and service
+startup, so a newly deployed service repairs a database that is behind the
+repository migration head before serving requests.
+
 The database data is stored in the named `homefin-postgres-data` volume. Do
 not expose PostgreSQL publicly in deployment.
 

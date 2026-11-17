@@ -46,6 +46,9 @@ export const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9, backgroundColor: colors.surface },
   selectedChip: { backgroundColor: "#E6F3F7", borderColor: colors.primary },
   chipText: { color: colors.ink, fontWeight: "600" },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(20,33,61,0.35)" },
+  modalCard: { backgroundColor: colors.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 20, gap: 10, maxHeight: "80%" },
+  modalOption: { borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 15 },
   badge: { backgroundColor: "#E6F3F7", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   badgeText: { color: colors.primary, fontWeight: "600" },
 });
