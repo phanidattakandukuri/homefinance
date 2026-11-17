@@ -30,8 +30,13 @@ def upgrade():
     for identifier, name, category_type in rows:
         connection.execute(sa.text("""
             INSERT INTO transaction_categories (id, household_id, name, category_type, is_default, is_active)
-            SELECT CAST(:id AS uuid), NULL, :name, :category_type, true, true
-            WHERE NOT EXISTS (SELECT 1 FROM transaction_categories WHERE household_id IS NULL AND lower(name) = lower(:name))
+            SELECT CAST(:id AS uuid), NULL, CAST(:name AS varchar(100)), CAST(:category_type AS varchar(20)), true, true
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM transaction_categories
+                WHERE household_id IS NULL
+                  AND lower(name) = lower(CAST(:name AS varchar(100)))
+            )
         """), {"id": identifier, "name": name, "category_type": category_type})
 
 def downgrade():
