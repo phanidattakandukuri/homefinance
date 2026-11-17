@@ -35,6 +35,15 @@ repository migration head before serving requests.
 The database data is stored in the named `homefin-postgres-data` volume. Do
 not expose PostgreSQL publicly in deployment.
 
+If a deployed database reports that `users.token_version` is missing, redeploy
+the latest commit so migration `20261114_20` runs. As an emergency one-time
+Neon SQL console repair, run:
+
+```sql
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
+```
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
