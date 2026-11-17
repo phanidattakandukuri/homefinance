@@ -36,6 +36,7 @@ class MemberUpdate(BaseModel):
 
 class MemberResponse(BaseModel):
     id: UUID
+    household_id: UUID
     user_id: UUID | None
     display_name: str
     email: str | None
@@ -60,6 +61,14 @@ class InvitationResponse(BaseModel):
     email: str
     expires_at: str
     invitation_token: str
+
+class JoinCodeResponse(BaseModel):
+    household_id: UUID
+    code: str
+    expires_at: str
+
+class JoinHouseholdRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=32)
 
 class HouseholdResponse(BaseModel):
     id: UUID

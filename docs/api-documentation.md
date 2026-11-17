@@ -86,6 +86,12 @@ recurring transactions through an idempotency key and advances each schedule.
 It is safe to invoke from a deployment cron or job runner; a durable scheduler
 is still an operational deployment responsibility.
 
+Household linking can use a short-lived code: an owner/admin calls
+`POST /api/v1/households/{household_id}/join-code`, and an authenticated user
+enters it through `POST /api/v1/households/join`. The backend creates the
+linked member profile from the authenticated account; clients never ask users
+to type member IDs.
+
 Document uploads create a persisted OCR job. Job state is available at
 `GET /api/v1/households/{household_id}/documents/{document_id}/ocr-job`; failed
 jobs can be retried with `POST .../ocr-job/retry`. This preserves job state and

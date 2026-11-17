@@ -7,7 +7,7 @@ an external production deployment.
 ## Tested
 
 - Backend Python compilation: passed.
-- Backend pytest suite: `12 passed`.
+- Backend pytest suite: `13 passed`.
 - Mobile TypeScript check from `mobile`: passed.
 - Android Expo embed bundle: passed.
 - API route registration: verified for authentication, transactions, documents,
@@ -21,8 +21,8 @@ an external production deployment.
 Member profiles, invitation linking, transaction privacy, typed wealth records,
 PF/gratuity ledgers, transfer accounting, XIRR/EMI primitives, recurring
 generation, CSV/XLSX/PDF transaction export, password reset, and token revocation were
-  notification preferences, and persisted OCR jobs were implemented with
-  Alembic migrations through `20261114_19`.
+  notification preferences, persisted OCR jobs, and household join codes were
+  implemented with Alembic migrations through `20261114_21`.
 
 ## High findings
 

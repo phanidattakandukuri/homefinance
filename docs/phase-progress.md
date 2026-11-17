@@ -52,7 +52,7 @@ records by member and applies asset ownership percentages.
 
 Python compilation, Alembic head discovery, and all current backend tests pass.
 Invitation linking, manual PF/gratuity ledgers, and tested XIRR/EMI
-calculation primitives are implemented. Migrations through `20261114_19` now
+calculation primitives are implemented. Migrations through `20261114_21` now
 also cover complete categories, server-side JWT revocation, transaction audit
 visibility, and password-reset tokens. Complete mobile wealth editing,
 market-data integrations and richer mobile wealth workflows remain in

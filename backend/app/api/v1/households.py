@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.v1.dependencies import current_user, household_member, require_admin
 from app.db.session import get_db
 from app.models.auth import User
-from app.models.household import Household, HouseholdInvitation, HouseholdMember
-from app.schemas.household import HouseholdCreate, HouseholdResponse, HouseholdUpdate, InvitationCreate, InvitationResponse, MemberCreate, MemberResponse, MemberUpdate
+from app.models.household import Household, HouseholdInvitation, HouseholdJoinCode, HouseholdMember
+from app.schemas.household import HouseholdCreate, HouseholdResponse, HouseholdUpdate, InvitationCreate, InvitationResponse, JoinCodeResponse, JoinHouseholdRequest, MemberCreate, MemberResponse, MemberUpdate
 
 router = APIRouter(prefix="/households", tags=["households"])
 
@@ -29,6 +29,25 @@ def get_household(household_id: UUID, db: Session) -> Household:
 @router.get("/{household_id}", response_model=HouseholdResponse)
 def read_household(household_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
     household_member(household_id, db, user); return get_household(household_id, db)
+
+@router.post("/{household_id}/join-code", response_model=JoinCodeResponse)
+def create_join_code(household_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    require_admin(household_id, db, user)
+    raw = secrets.token_urlsafe(9).replace("-", "A").replace("_", "B").upper()[:10]
+    expires = datetime.now(timezone.utc) + timedelta(days=7)
+    db.add(HouseholdJoinCode(household_id=household_id, created_by_user_id=user.id, code_hash=hashlib.sha256(raw.encode()).hexdigest(), expires_at=expires)); db.flush()
+    return {"household_id": household_id, "code": raw, "expires_at": expires.isoformat()}
+
+@router.post("/join", response_model=MemberResponse)
+def join_household(payload: JoinHouseholdRequest, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    hashed = hashlib.sha256(payload.code.strip().upper().encode()).hexdigest()
+    join = db.scalar(select(HouseholdJoinCode).where(HouseholdJoinCode.code_hash == hashed, HouseholdJoinCode.revoked_at.is_(None), HouseholdJoinCode.expires_at > datetime.now(timezone.utc)))
+    if not join: raise HTTPException(404, "Invalid or expired household code")
+    existing = db.scalar(select(HouseholdMember).where(HouseholdMember.household_id == join.household_id, HouseholdMember.user_id == user.id))
+    if existing:
+        existing.membership_status = "active"; return existing
+    member = HouseholdMember(household_id=join.household_id, user_id=user.id, display_name=user.full_name, email=user.email, role="member", membership_status="active")
+    db.add(member); db.flush(); return member
 
 @router.patch("/{household_id}", response_model=HouseholdResponse)
 def update_household(household_id: UUID, payload: HouseholdUpdate, user: User = Depends(current_user), db: Session = Depends(get_db)):

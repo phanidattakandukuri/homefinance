@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import {
 } from "@/components/Screen";
 import { api } from "@/lib/api";
 import { useHousehold } from "@/lib/household";
+import { useAuth } from "@/lib/auth";
 import { queueTransaction } from "@/lib/offline";
 import * as Network from "expo-network";
 
@@ -34,6 +35,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function Transaction() {
   const householdId = useHousehold((state) => state.householdId);
+  const user = useAuth((state) => state.user);
   const client = useQueryClient();
 
   const members = useQuery({
@@ -71,6 +73,10 @@ export default function Transaction() {
   const type = watch("type");
   const memberId = watch("memberId");
   const categoryId = watch("categoryId");
+  useEffect(() => {
+    const current = members.data?.find((member) => member.user_id === user?.id && member.membership_status === "active");
+    if (current && !memberId) setValue("memberId", current.id, { shouldValidate: true });
+  }, [members.data, user?.id, memberId, setValue]);
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -141,6 +147,7 @@ export default function Transaction() {
           </Pressable>
         ))}
       </View>
+      {!members.isLoading && !members.data?.length && <Text style={styles.error}>No linked household member was found. Join or create a household first.</Text>}
       {errors.memberId && <Text style={styles.error}>{errors.memberId.message}</Text>}
 
       <FieldLabel>Category</FieldLabel>
@@ -151,11 +158,12 @@ export default function Transaction() {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Text style={styles.title}>Choose category</Text>
-            {(categories.data ?? []).filter((category) => category.category_type === type || category.category_type === "other").map((category) => (
+            {categories.isLoading ? <Text style={styles.muted}>Loading categories…</Text> : (categories.data ?? []).filter((category) => category.category_type === type || category.category_type === "other").map((category) => (
               <Pressable key={category.id} onPress={() => { setValue("categoryId", category.id); setCategoryOpen(false); }} style={styles.modalOption}>
                 <Text style={styles.chipText}>{category.name}</Text>
               </Pressable>
             ))}
+            {!categories.isLoading && !(categories.data ?? []).some((category) => category.category_type === type || category.category_type === "other") && <Text style={styles.error}>No categories are available for {type}. Run the latest backend migrations.</Text>}
             <ActionButton title="Cancel" secondary onPress={() => setCategoryOpen(false)} />
           </View>
         </View>

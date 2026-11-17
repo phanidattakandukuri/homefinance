@@ -7,16 +7,14 @@ import { useHousehold } from "@/lib/household";
 
 export default function Members() {
   const id = useHousehold((s) => s.householdId);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [selected, setSelected] = useState<Member>();
   const [editName, setEditName] = useState("");
   const [occupation, setOccupation] = useState("");
   const q = useQuery({ queryKey: ["members", id], queryFn: () => api.members(id!), enabled: !!id });
-  const invite = useMutation({
-    mutationFn: () => api.inviteMember(id!, { display_name: name.trim(), email: email.trim() }),
-    onSuccess: (result) => { setToken(result.invitation_token); setName(""); setEmail(""); void q.refetch(); },
+  const generate = useMutation({
+    mutationFn: () => api.createJoinCode(id!),
+    onSuccess: (result) => setJoinCode(result.code),
   });
   const update = useMutation({
     mutationFn: () => api.updateMember(id!, selected!.id, { display_name: editName.trim(), occupation: occupation.trim() || null }),
@@ -25,7 +23,7 @@ export default function Members() {
   function selectMember(member: Member) { setSelected(member); setEditName(member.display_name); setOccupation(member.occupation ?? ""); }
   return <Screen>
     <Text style={styles.title}>Household members</Text>
-    <State loading={q.isLoading} error={(q.error || invite.error || update.error) as Error | null} />
+    <State loading={q.isLoading} error={(q.error || generate.error || update.error) as Error | null} />
     {q.data?.map((member) => <Pressable key={member.id} onPress={() => selectMember(member)}><Text style={styles.card}>{member.display_name} — {member.role} · {member.membership_status}{member.user_id ? " · linked" : " · pending"}</Text></Pressable>)}
     {selected ? <>
       <FieldLabel>Edit member profile</FieldLabel>
@@ -34,11 +32,10 @@ export default function Members() {
       <ActionButton title={update.isPending ? "Saving..." : "Save member"} disabled={!editName.trim() || update.isPending} onPress={() => void update.mutateAsync()} />
       <ActionButton title="Cancel" secondary onPress={() => setSelected(undefined)} />
     </> : null}
-    <FieldLabel>Invite a family member</FieldLabel>
-    <TextInput style={styles.input} placeholder="Full name" value={name} onChangeText={setName} />
-    <TextInput style={styles.input} placeholder="Email address" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
-    <ActionButton title={invite.isPending ? "Creating invitation..." : "Create invitation"} disabled={!name.trim() || !email.trim() || invite.isPending} onPress={() => void invite.mutateAsync()} />
-    {token ? <Text style={styles.card}>Invitation created. Share this one-time setup token securely: {token}</Text> : null}
+    <FieldLabel>Link another logged-in family member</FieldLabel>
+    <Text style={styles.muted}>Generate a temporary code and share it privately. They enter it during onboarding; no email or member ID is needed.</Text>
+    <ActionButton title={generate.isPending ? "Generating code..." : "Generate household code"} disabled={generate.isPending} onPress={() => void generate.mutateAsync()} />
+    {joinCode ? <Text style={styles.card}>Share this code: {joinCode}</Text> : null}
     <ActionButton title="Refresh" secondary onPress={() => void q.refetch()} />
   </Screen>;
 }

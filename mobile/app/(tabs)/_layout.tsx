@@ -19,7 +19,7 @@ export default function TabLayout() {
             wealth: "trending-up-outline",
             profile: "person-outline",
           };
-          return <Ionicons name={icons[route.name] ?? "ellipse-outline"} size={route.name === "add" ? size + 4 : size} color={color} />;
+          return <Ionicons name={icons[route.name] ?? "ellipse-outline"} size={route.name === "add" ? size + 4 : size} color={typeof color === "number" ? colors.ink : color ?? colors.ink} />;
         },
       })}
     >

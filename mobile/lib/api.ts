@@ -15,6 +15,7 @@ export type User = {
 
 export type Member = {
   id: string;
+  household_id: string;
   user_id: string | null;
   display_name: string;
   role: string;
@@ -215,6 +216,8 @@ export const api = {
   confirmExtraction: (id: string, documentId: string, body: unknown) => request<any>(`/households/${id}/documents/${documentId}/confirm`, { method: "POST", body: JSON.stringify(body) }),
   updateMember: (id: string, memberId: string, body: unknown) => request<Member>(`/households/${id}/members/${memberId}`, { method: "PATCH", body: JSON.stringify(body) }),
   inviteMember: (id: string, body: { email: string; display_name: string; role?: string; relationship_to_household?: string }) => request<{ invitation_token: string; member_id: string; invitation_id: string }>(`/households/${id}/invitations`, { method: "POST", body: JSON.stringify(body) }),
+  createJoinCode: (id: string) => request<{ household_id: string; code: string; expires_at: string }>(`/households/${id}/join-code`, { method: "POST" }),
+  joinHousehold: (code: string) => request<Member>("/households/join", { method: "POST", body: JSON.stringify({ code }) }),
   removeMember: (id: string, memberId: string) => request<void>(`/households/${id}/members/${memberId}`, { method: "DELETE" }),
   askAssistant: (id: string, question: string) => request<{answer:string;evidence:unknown[]}>(`/households/${id}/assistant/ask`, { method: "POST", body: JSON.stringify({question}) }),
   uploadDocument: async (id: string, file: {uri:string;name:string;mimeType:string}) => { const form = new FormData(); form.append("file", { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob); return request<unknown>(`/households/${id}/documents`, { method: "POST", body: form }); },

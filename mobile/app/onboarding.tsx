@@ -6,21 +6,15 @@ import { api } from "@/lib/api";
 import { useHousehold } from "@/lib/household";
 
 export default function Onboarding() {
-  const [name, setName] = useState(""); const [members, setMembers] = useState(""); const [error, setError] = useState<Error>();
+  const [name, setName] = useState(""); const [joinCode, setJoinCode] = useState(""); const [generatedCode, setGeneratedCode] = useState(""); const [error, setError] = useState<Error>();
   const setHouseholdId = useHousehold((state) => state.setHouseholdId);
-  async function submit() {
-    try {
-      const household = await api.createHousehold({ name: name.trim(), base_currency: "INR", timezone: "Asia/Kolkata", earning_member_names: members.split(",").map((item) => item.trim()).filter(Boolean) });
-      await setHouseholdId(household.id);
-      router.replace("/(tabs)");
-    } catch (value) { setError(value instanceof Error ? value : new Error("Unable to create household.")); }
-  }
+  async function join() { try { const member = await api.joinHousehold(joinCode); await setHouseholdId(member.household_id); router.replace("/(tabs)"); } catch (value) { setError(value instanceof Error ? value : new Error("Unable to join household.")); } }
+  async function generate() { try { const household = await api.createHousehold({ name: name.trim(), base_currency: "INR", timezone: "Asia/Kolkata", earning_member_names: [] }); await setHouseholdId(household.id); const result = await api.createJoinCode(household.id); setGeneratedCode(result.code); } catch (value) { setError(value instanceof Error ? value : new Error("Unable to create household code.")); } }
   return <Screen>
     <Text style={styles.title}>Set up your household</Text>
-    <Text style={styles.subtitle}>The backend will create the household and its initial earning-member profiles. You can add linked users later.</Text>
+    <Text style={styles.subtitle}>Create a household, then share its join code. Other logged-in family members can enter that code to link themselves automatically.</Text>
     <FieldLabel>Household name</FieldLabel><TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Our home" />
-    <FieldLabel>Other earning members (comma separated, optional)</FieldLabel><TextInput style={styles.input} value={members} onChangeText={setMembers} placeholder="Alex, Priya" />
+    <ActionButton title="Create household and join code" disabled={!name.trim()} onPress={() => void generate()} />{generatedCode ? <Text style={styles.card}>Share this code: {generatedCode}</Text> : null}<FieldLabel>Have a household code?</FieldLabel><TextInput style={styles.input} value={joinCode} onChangeText={setJoinCode} autoCapitalize="characters" placeholder="Enter join code" /><ActionButton title="Join household" disabled={joinCode.trim().length < 6} onPress={() => void join()} secondary />
     <State error={error} />
-    <ActionButton title="Create household" disabled={!name.trim()} onPress={() => void submit()} />
   </Screen>;
 }
