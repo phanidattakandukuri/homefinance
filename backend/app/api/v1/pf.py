@@ -25,8 +25,9 @@ def create_account(household_id: UUID, payload: PFAccountCreate, user: User = De
 
 @router.get("/accounts", response_model=list[PFAccountResponse])
 def list_accounts(household_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    household_member(household_id, db, user)
-    return db.scalars(select(ProvidentFundAccount).where(ProvidentFundAccount.household_id == household_id)).all()
+    actor = household_member(household_id, db, user); q = select(ProvidentFundAccount).where(ProvidentFundAccount.household_id == household_id)
+    if actor.role not in {"owner", "admin"}: q = q.where(ProvidentFundAccount.member_id == actor.id)
+    return db.scalars(q).all()
 
 @router.post("/accounts/{account_id}/entries", response_model=PFEntryResponse, status_code=201)
 def create_entry(household_id: UUID, account_id: UUID, payload: PFEntryCreate, user: User = Depends(current_user), db: Session = Depends(get_db)):
