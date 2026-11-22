@@ -3,17 +3,51 @@ import hashlib
 import secrets
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.api.v1.dependencies import current_user
 from app.core.security import create_token, hash_password, verify_password, decode_token, decode_token_version
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models.auth import PasswordResetToken, User
+from app.models.auth import GeminiApiKey, PasswordResetToken, User
 from app.models.household import HouseholdInvitation, HouseholdMember
 from app.schemas.auth import InvitationAcceptRequest, LoginRequest, PasswordChangeRequest, PasswordResetConfirm, PasswordResetRequest, PasswordResetResponse, RegisterRequest, TokenResponse, UserResponse
+from app.services.ai_provider import encrypt_key
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+class GeminiKeyCreate(BaseModel):
+    api_key: str = Field(min_length=20, max_length=300)
+    label: str = Field(default="Gemini key", max_length=100)
+
+@router.get("/gemini-keys")
+def list_gemini_keys(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    return [{"id": x.id, "label": x.label, "last_four": x.last_four, "is_active": x.is_active, "created_at": x.created_at, "last_used_at": x.last_used_at} for x in db.scalars(select(GeminiApiKey).where(GeminiApiKey.user_id == user.id).order_by(GeminiApiKey.created_at.desc()))]
+
+@router.post("/gemini-keys", status_code=201)
+def add_gemini_key(payload: GeminiKeyCreate, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    key = payload.api_key.strip()
+    if not key.startswith("AIza"):
+        raise HTTPException(400, "That does not look like a Gemini API key. Gemini keys normally start with AIza.")
+    for existing in db.scalars(select(GeminiApiKey).where(GeminiApiKey.user_id == user.id)):
+        existing.is_active = False
+    item = GeminiApiKey(user_id=user.id, label=payload.label.strip() or "Gemini key", encrypted_key=encrypt_key(key), last_four=key[-4:], is_active=True)
+    db.add(item); db.flush()
+    return {"id": item.id, "label": item.label, "last_four": item.last_four, "is_active": True}
+
+@router.post("/gemini-keys/{key_id}/activate")
+def activate_gemini_key(key_id, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    item = db.scalar(select(GeminiApiKey).where(GeminiApiKey.id == key_id, GeminiApiKey.user_id == user.id))
+    if not item: raise HTTPException(404, "Gemini key not found")
+    for existing in db.scalars(select(GeminiApiKey).where(GeminiApiKey.user_id == user.id)): existing.is_active = existing.id == item.id
+    db.flush(); return {"status": "active", "id": item.id}
+
+@router.delete("/gemini-keys/{key_id}", status_code=204)
+def delete_gemini_key(key_id, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    item = db.scalar(select(GeminiApiKey).where(GeminiApiKey.id == key_id, GeminiApiKey.user_id == user.id))
+    if not item: raise HTTPException(404, "Gemini key not found")
+    db.delete(item)
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):

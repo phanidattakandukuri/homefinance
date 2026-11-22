@@ -22,6 +22,7 @@ psycopg[binary]>=3.2,<4.0
 # Authentication and password hashing
 PyJWT>=2.9,<3.0
 argon2-cffi>=23.1,<26.0
+cryptography>=43,<46
 
 # Receipt/document processing and OCR
 Pillow>=10,<13

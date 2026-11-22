@@ -19,13 +19,20 @@ export default function Upload() {
 
     const f = r.assets[0];
 
-    await api.uploadDocument(id, {
+    const document = await api.uploadDocument(id, {
       uri: f.uri,
       name: f.name,
       mimeType: f.mimeType ?? "application/octet-stream",
     });
 
-    setMsg("Uploaded. OCR requires review before transaction confirmation.");
+    setMsg("Uploaded. Processing OCR…");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const job = await api.ocrJob(id, document.id);
+      if (job.status === "completed") { setMsg("OCR completed. Opening review…"); router.push(`/document-review?documentId=${document.id}`); return; }
+      if (job.status === "failed") { setMsg(`OCR failed: ${job.last_error ?? "check the document and try again"}`); return; }
+    }
+    setMsg(`OCR is still processing. Document ID: ${document.id}`);
   }
 
   return (
@@ -42,7 +49,7 @@ export default function Upload() {
 
       <Button
         title="Review extraction"
-        onPress={() => router.push("/document-review")}
+        onPress={() => setMsg("Choose a document first; review opens automatically after OCR completes.")}
       />
 
       {msg ? <Text style={styles.card}>{msg}</Text> : null}

@@ -15,10 +15,12 @@ def ask(household_id, payload:AssistantRequest, user:User=Depends(current_user),
     start=payload.start; end=payload.end; context=[]
     summary=get_household_summary(db,household_id,start,end); context.append({"tool":"get_household_summary","data":summary,"date_range":f"{start or 'current month'} to {end or date.today()}"})
     q=payload.question.lower()
-    if "invest" in q or "wealth" in q: context.append({"tool":"get_investment_summary","data":get_investment_summary(db,household_id),"date_range":"latest dated valuation","source":"investment_valuations"})
-    if "pf" in q or "epf" in q: context.append({"tool":"get_pf_summary","data":get_pf_summary(db,household_id),"date_range":"all recorded salary contributions","source":"salary_records"})
+    if any(x in q for x in ("invest", "wealth", "retire", "afford", "recommend", "suggest", "portfolio", "risk", "financial plan")):
+        context.append({"tool":"get_investment_summary","data":get_investment_summary(db,household_id),"date_range":"latest dated valuation","source":"investment_valuations"})
+        context.append({"tool":"get_pf_summary","data":get_pf_summary(db,household_id),"date_range":"all recorded salary contributions","source":"salary_records"})
+        context.append({"tool":"get_net_worth","data":get_net_worth(db,household_id,start,end),"date_range":f"{start or 'current'} to {end or date.today()}","source":"analytics aggregation"})
     if "net worth" in q: context.append({"tool":"get_net_worth","data":get_net_worth(db,household_id,start,end),"date_range":f"{start or 'current'} to {end or date.today()}","source":"analytics aggregation"})
-    try: answer=GeminiProvider().answer(payload.question,context)
+    try: answer=GeminiProvider(db, user.id).answer(payload.question,context)
     except RuntimeError: answer="Gemini is not configured. Verified data is available in the evidence below; no unverified answer was generated."
     evidence=[Evidence(tool=x["tool"],date_range=x.get("date_range","requested period"),source=x.get("source","authoritative analytics aggregation"),data=x["data"]) for x in context]
     return {"answer":answer,"evidence":evidence}

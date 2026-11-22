@@ -76,6 +76,8 @@ export type Transaction = {
 export type Category = { id: string; name: string; category_type: string; parent_id: string | null };
 export type Instrument = { id: string; name: string; category: string; identifier: string | null; currency: string };
 export type Investment = { id: string; household_id: string; member_id: string; instrument_id: string; notes: string | null };
+export type UploadedDocument = { id: string; original_filename: string; mime_type: string; size_bytes: number; document_type: string; status: string };
+export type GeminiKey = { id: string; label: string; last_four: string; is_active: boolean };
 export type Asset = { id: string; household_id: string; member_id: string | null; name: string; category: string; current_value: number | string | null };
 export type Liability = { id: string; household_id: string; member_id: string | null; name: string; category: string; current_outstanding: number | string | null };
 export type NotificationPreferences = { id: string; household_id: string; user_id: string; enabled: boolean; recurring_reminders: boolean; budget_alerts: boolean; goal_reminders: boolean; channel: "push" | "email" | "none" };
@@ -221,7 +223,11 @@ export const api = {
   joinHousehold: (code: string) => request<Member>("/households/join", { method: "POST", body: JSON.stringify({ code }) }),
   removeMember: (id: string, memberId: string) => request<void>(`/households/${id}/members/${memberId}`, { method: "DELETE" }),
   askAssistant: (id: string, question: string) => request<{answer:string;evidence:unknown[]}>(`/households/${id}/assistant/ask`, { method: "POST", body: JSON.stringify({question}) }),
-  uploadDocument: async (id: string, file: {uri:string;name:string;mimeType:string}) => { const form = new FormData(); form.append("file", { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob); return request<unknown>(`/households/${id}/documents`, { method: "POST", body: form }); },
+  geminiKeys: () => request<GeminiKey[]>("/auth/gemini-keys"),
+  addGeminiKey: (body: { api_key: string; label?: string }) => request<GeminiKey>("/auth/gemini-keys", { method: "POST", body: JSON.stringify(body) }),
+  activateGeminiKey: (id: string) => request<unknown>(`/auth/gemini-keys/${id}/activate`, { method: "POST" }),
+  uploadDocument: async (id: string, file: {uri:string;name:string;mimeType:string}) => { const form = new FormData(); form.append("file", { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob); return request<UploadedDocument>(`/households/${id}/documents`, { method: "POST", body: form }); },
+  ocrJob: (id: string, documentId: string) => request<{status:string;last_error?:string|null}>(`/households/${id}/documents/${documentId}/ocr-job`),
   notificationPreferences: (id: string) => request<NotificationPreferences>(`/households/${id}/notifications/preferences`),
   updateNotificationPreferences: (id: string, body: Omit<NotificationPreferences, "id" | "household_id" | "user_id">) => request<NotificationPreferences>(`/households/${id}/notifications/preferences`, { method: "PUT", body: JSON.stringify(body) }),
   pfAccounts: (id: string) => request<PFAccount[]>(`/households/${id}/pf/accounts`),
