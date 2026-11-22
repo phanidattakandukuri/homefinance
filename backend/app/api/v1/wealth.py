@@ -19,7 +19,9 @@ def investment(household_id: UUID, p: InvestmentCreate, user: User = Depends(cur
     auth(household_id,p.member_id,user,db); x=Investment(household_id=household_id, **p.model_dump()); db.add(x); db.flush(); return x
 @router.get("/investments", response_model=list[InvestmentResponse])
 def investments(household_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    household_member(household_id, db, user); return db.scalars(select(Investment).where(Investment.household_id==household_id)).all()
+    actor = household_member(household_id, db, user); q = select(Investment).where(Investment.household_id==household_id)
+    if actor.role not in {"owner", "admin"}: q = q.where(Investment.member_id == actor.id)
+    return db.scalars(q).all()
 @router.get("/instruments", response_model=list[InstrumentResponse])
 def instruments(household_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):
     household_member(household_id, db, user); return [{"id":x.id,"name":x.name,"category":x.category,"identifier":x.identifier,"currency":x.currency} for x in db.scalars(select(InvestmentInstrument).where(InvestmentInstrument.household_id==household_id))]
@@ -67,13 +69,17 @@ def asset(household_id: UUID,p: AssetCreate,user: User=Depends(current_user),db:
     auth(household_id,p.member_id,user,db); x=Asset(household_id=household_id,**p.model_dump()); db.add(x); db.flush(); return x
 @router.get("/assets", response_model=list[AssetResponse])
 def assets(household_id: UUID, user: User=Depends(current_user), db: Session=Depends(get_db)):
-    household_member(household_id,db,user); return db.scalars(select(Asset).where(Asset.household_id==household_id)).all()
+    actor = household_member(household_id,db,user); q = select(Asset).where(Asset.household_id==household_id)
+    if actor.role not in {"owner", "admin"}: q = q.where(Asset.member_id == actor.id)
+    return db.scalars(q).all()
 @router.post("/liabilities", response_model=LiabilityResponse, status_code=201)
 def liability(household_id: UUID,p: LiabilityCreate,user: User=Depends(current_user),db: Session=Depends(get_db)):
     auth(household_id,p.member_id,user,db); x=Liability(household_id=household_id,**p.model_dump()); db.add(x); db.flush(); return x
 @router.get("/liabilities", response_model=list[LiabilityResponse])
 def liabilities(household_id: UUID, user: User=Depends(current_user), db: Session=Depends(get_db)):
-    household_member(household_id,db,user); return db.scalars(select(Liability).where(Liability.household_id==household_id)).all()
+    actor = household_member(household_id,db,user); q = select(Liability).where(Liability.household_id==household_id)
+    if actor.role not in {"owner", "admin"}: q = q.where(Liability.member_id == actor.id)
+    return db.scalars(q).all()
 
 @router.get("/liabilities/{liability_id}/payments", response_model=list[LiabilityPaymentResponse])
 def liability_payments(household_id: UUID, liability_id: UUID, user: User = Depends(current_user), db: Session = Depends(get_db)):

@@ -20,6 +20,8 @@ def list_my_households(user: User = Depends(current_user), db: Session = Depends
 
 @router.post("", response_model=HouseholdResponse, status_code=201)
 def create_household(payload: HouseholdCreate, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if db.scalar(select(HouseholdMember).where(HouseholdMember.user_id == user.id, HouseholdMember.membership_status == "active")):
+        raise HTTPException(409, "You already belong to a household")
     household = Household(name=payload.name, base_currency=payload.base_currency.upper(), timezone=payload.timezone)
     db.add(household); db.flush()
     db.add(HouseholdMember(household_id=household.id, user_id=user.id, display_name=user.full_name, role="owner"))
@@ -98,7 +100,7 @@ def update_member(household_id: UUID, member_id: UUID, payload: MemberUpdate, us
     if not member or member.household_id != household_id: raise HTTPException(404, "Member not found")
     values = payload.model_dump(exclude_unset=True)
     requested_role = values.get("role")
-    if member.role == "owner" or requested_role == "owner" or (actor.role != "owner" and requested_role == "admin"):
+    if member.role == "owner" or requested_role == "owner":
         raise HTTPException(403, "Owner-only role change")
     if requested_role and requested_role not in {"admin", "member", "viewer"}:
         raise HTTPException(400, "Invalid member role")
