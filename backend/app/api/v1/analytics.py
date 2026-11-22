@@ -29,7 +29,9 @@ def period(period_type, start, end):
     return start,end
 @router.get("/household",response_model=DashboardResponse)
 def household_dashboard(household_id:UUID, period_type:str="current_month", start:date|None=None,end:date|None=None,user:User=Depends(current_user),db:Session=Depends(get_db)):
-    require_admin(household_id,db,user); s,e=period(period_type,start,end); return dashboard(db,household_id,s,e)
+    actor = household_member(household_id, db, user); s,e=period(period_type,start,end)
+    if actor.role in {"owner", "admin"}: return dashboard(db,household_id,s,e)
+    return dashboard(db, household_id, s, e, actor.id)
 @router.get("/members/{member_id}",response_model=DashboardResponse)
 def member_dashboard(household_id:UUID,member_id:UUID,period_type:str="current_month",start:date|None=None,end:date|None=None,user:User=Depends(current_user),db:Session=Depends(get_db)):
     authorize_member_view(household_id, member_id, db, user); s,e=period(period_type,start,end); return dashboard(db,household_id,s,e,member_id)

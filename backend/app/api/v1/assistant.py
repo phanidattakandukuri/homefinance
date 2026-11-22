@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.models.auth import User
 from app.schemas.assistant import AssistantRequest, AssistantResponse, Evidence
 from app.services.ai_provider import GeminiProvider
-from app.services.assistant_tools import get_household_summary, get_investment_summary, get_pf_summary, get_net_worth
+from app.services.assistant_tools import get_household_summary, get_member_summary, get_investment_summary, get_pf_summary, get_net_worth
 router=APIRouter(prefix="/households/{household_id}/assistant",tags=["assistant"])
 @router.post("/ask",response_model=AssistantResponse)
 def ask(household_id, payload:AssistantRequest, user:User=Depends(current_user), db:Session=Depends(get_db)):
@@ -14,7 +14,7 @@ def ask(household_id, payload:AssistantRequest, user:User=Depends(current_user),
     if any(x in payload.question.lower() for x in ("ignore previous", "system prompt", "reveal prompt", "invent", "make up")): raise HTTPException(400,"The assistant only answers from verified household data")
     start=payload.start; end=payload.end; context=[]
     if actor.role in {"owner", "admin"}: summary=get_household_summary(db,household_id,start,end)
-    else: summary=get_household_summary(db,household_id,start,end, actor.id)
+    else: summary=get_member_summary(db, household_id, actor.id, start, end)
     context.append({"tool":"get_household_summary","data":summary,"date_range":f"{start or 'current month'} to {end or date.today()}"})
     q=payload.question.lower()
     if actor.role in {"owner", "admin"} and any(x in q for x in ("invest", "wealth", "retire", "afford", "recommend", "suggest", "portfolio", "risk", "financial plan")):

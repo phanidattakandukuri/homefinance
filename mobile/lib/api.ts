@@ -213,6 +213,7 @@ export const api = {
   investmentTransactions: (id: string, investmentId: string, body: unknown) => request<unknown>(`/households/${id}/wealth/investments/${investmentId}/transactions`, { method: "POST", body: JSON.stringify(body) }),
   loanSchedule: (id: string, liabilityId: string) => request<unknown>(`/households/${id}/wealth/liabilities/${liabilityId}/schedule`),
   salary: (id: string, memberId: string) => request<unknown[]>(`/households/${id}/members/${memberId}/salary`),
+  updateSalary: (id: string, memberId: string, salaryId: string, body: unknown) => request<unknown>(`/households/${id}/members/${memberId}/salary/${salaryId}`, { method: "PATCH", body: JSON.stringify(body) }),
   createSalary: (id: string, memberId: string, body: unknown) => request<unknown>(`/households/${id}/members/${memberId}/salary`, { method: "POST", body: JSON.stringify(body) }),
   snapshots: (id: string) => request<unknown[]>(`/households/${id}/analytics/snapshots`),
   transactionExportUrl: (id: string, start?: string, end?: string) => `${baseUrl}/households/${id}/analytics/export/transactions.csv${start || end ? `?${new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()}` : ""}`,
