@@ -21,6 +21,15 @@ class GeminiKeyCreate(BaseModel):
     api_key: str = Field(min_length=20, max_length=300)
     label: str = Field(default="Gemini key", max_length=100)
 
+class ProfileUpdate(BaseModel):
+    full_name: str = Field(min_length=2, max_length=200)
+
+@router.patch("/me", response_model=UserResponse)
+def update_profile(payload: ProfileUpdate, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    user.full_name = payload.full_name.strip()
+    db.flush()
+    return user
+
 @router.get("/gemini-keys")
 def list_gemini_keys(user: User = Depends(current_user), db: Session = Depends(get_db)):
     return [{"id": x.id, "label": x.label, "last_four": x.last_four, "is_active": x.is_active, "created_at": x.created_at, "last_used_at": x.last_used_at} for x in db.scalars(select(GeminiApiKey).where(GeminiApiKey.user_id == user.id).order_by(GeminiApiKey.created_at.desc()))]

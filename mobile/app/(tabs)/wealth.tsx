@@ -1,27 +1,10 @@
-import { Text } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Text, View } from "react-native";
+import { ActionButton, Screen, State, colors, styles } from "@/components/Screen";
 import { useQuery } from "@tanstack/react-query";
-import { Screen, State, styles } from "@/components/Screen";
 import { api } from "@/lib/api";
 import { useHousehold } from "@/lib/household";
-
-export default function Wealth() {
-  const id = useHousehold((state) => state.householdId);
-  const instruments = useQuery({ queryKey: ["instruments", id], queryFn: () => api.instruments(id!), enabled: Boolean(id) });
-  const investments = useQuery({ queryKey: ["investments", id], queryFn: () => api.investments(id!), enabled: Boolean(id) });
-  const assets = useQuery({ queryKey: ["assets", id], queryFn: () => api.assets(id!), enabled: Boolean(id) });
-  const liabilities = useQuery({ queryKey: ["liabilities", id], queryFn: () => api.liabilities(id!), enabled: Boolean(id) });
-
-  if (!id) return <Screen><Text style={styles.title}>Wealth</Text><Text style={styles.muted}>Create a household to load verified wealth records.</Text></Screen>;
-  const error = instruments.error ?? investments.error ?? assets.error ?? liabilities.error;
-  const totalAssets = assets.data?.reduce((sum, item) => sum + Number(item.current_value ?? 0), 0) ?? 0;
-  const totalLiabilities = liabilities.data?.reduce((sum, item) => sum + Number(item.current_outstanding ?? 0), 0) ?? 0;
-  const money = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
-  return <Screen>
-    <Text style={styles.title}>Wealth</Text>
-    <State loading={instruments.isLoading || investments.isLoading || assets.isLoading || liabilities.isLoading} error={error as Error | null} />
-    <Text style={styles.card}><Text style={styles.label}>Investments{"\n"}</Text><Text style={styles.value}>{investments.data?.length ?? 0}</Text><Text style={styles.muted}> holdings across {instruments.data?.length ?? 0} instruments</Text></Text>
-    <Text style={styles.card}><Text style={styles.label}>Assets{"\n"}</Text><Text style={styles.value}>{assets.data?.length ?? 0}</Text><Text style={styles.muted}> registered household assets</Text></Text>
-    <Text style={styles.card}><Text style={styles.label}>Liabilities{"\n"}</Text><Text style={styles.value}>{liabilities.data?.length ?? 0}</Text><Text style={styles.muted}> outstanding liability records</Text></Text>
-    <Text style={styles.card}><Text style={styles.label}>Estimated wealth snapshot{"\n"}</Text><Text style={styles.value}>{money(totalAssets - totalLiabilities)}</Text><Text style={styles.muted}>{money(totalAssets)} assets less {money(totalLiabilities)} liabilities</Text></Text>
-  </Screen>;
-}
+const money = (v: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(v);
+export default function Wealth() { const id = useHousehold((s) => s.householdId); const investments = useQuery({ queryKey: ["investments", id], queryFn: () => api.investments(id!), enabled: Boolean(id) }); const instruments = useQuery({ queryKey: ["instruments", id], queryFn: () => api.instruments(id!), enabled: Boolean(id) }); const assets = useQuery({ queryKey: ["assets", id], queryFn: () => api.assets(id!), enabled: Boolean(id) }); const liabilities = useQuery({ queryKey: ["liabilities", id], queryFn: () => api.liabilities(id!), enabled: Boolean(id) }); if (!id) return <Screen><Text style={styles.title}>Wealth</Text><Text style={styles.subtitle}>Build a complete picture of assets, investments and liabilities.</Text></Screen>; const loading = investments.isLoading || instruments.isLoading || assets.isLoading || liabilities.isLoading; const error = (investments.error || instruments.error || assets.error || liabilities.error) as Error | null; const assetValue = assets.data?.reduce((s, x) => s + Number(x.current_value ?? 0), 0) ?? 0; const debt = liabilities.data?.reduce((s, x) => s + Number(x.current_outstanding ?? 0), 0) ?? 0; return <Screen><View style={styles.pageHeader}><View><Text style={styles.eyebrow}>HOUSEHOLD WEALTH</Text><Text style={styles.title}>Your wealth</Text></View><Ionicons name="shield-checkmark-outline" size={30} color={colors.primary}/></View><State loading={loading} error={error}/><View style={styles.heroCard}><Text style={styles.label}>Estimated net wealth</Text><Text style={styles.heroValue}>{money(assetValue - debt)}</Text><Text style={styles.muted}>{money(assetValue)} assets · {money(debt)} liabilities</Text></View><View style={styles.grid}><Stat icon="trending-up" label="Investments" value={`${investments.data?.length ?? 0}`} hint={`${instruments.data?.length ?? 0} instruments`} /><Stat icon="home-outline" label="Assets" value={`${assets.data?.length ?? 0}`} hint="registered records" /><Stat icon="card-outline" label="Liabilities" value={`${liabilities.data?.length ?? 0}`} hint="outstanding records" /></View><Text style={styles.sectionTitle}>Manage wealth</Text><ActionButton title="Investments and valuations" onPress={() => router.push("/investment")} /><ActionButton title="Record investment activity" secondary onPress={() => router.push("/investment-transaction")} /><View style={styles.infoCard}><Text style={styles.label}>Keep it current</Text><Text style={styles.muted}>Update valuations regularly to keep gain, XIRR and net wealth analysis meaningful.</Text></View></Screen>; }
+function Stat({ icon, label, value, hint }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; hint: string }) { return <View style={styles.statCard}><Ionicons name={icon} size={22} color={colors.primary}/><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text><Text style={styles.statHint}>{hint}</Text></View>; }

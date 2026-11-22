@@ -182,6 +182,7 @@ export const api = {
   register: (body: RegisterPayload) => request<User>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) => request<TokenPair>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => request<User>("/auth/me"),
+  updateProfile: (body: { full_name: string }) => request<User>("/auth/me", { method: "PATCH", body: JSON.stringify(body) }),
   changePassword: (body: { current_password: string; new_password: string }) => request<void>("/auth/password", { method: "POST", body: JSON.stringify(body) }),
   requestPasswordReset: (email: string) => request<{ message: string; reset_token?: string }>("/auth/password/reset-request", { method: "POST", body: JSON.stringify({ email }) }),
   resetPassword: (body: { reset_token: string; new_password: string }) => request<void>("/auth/password/reset", { method: "POST", body: JSON.stringify(body) }),

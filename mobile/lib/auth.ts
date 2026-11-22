@@ -12,6 +12,7 @@ type AuthState = {
   hydrate: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  setUser: (user: User) => void;
 };
 
 export const useAuth = create<AuthState>((set) => ({
@@ -54,4 +55,5 @@ export const useAuth = create<AuthState>((set) => ({
     set({ tokens: undefined, user: undefined, error: undefined });
   },
   clearError: () => set({ error: undefined }),
+  setUser: (user) => set({ user }),
 }));
