@@ -1,31 +1,6 @@
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import { Screen, State, styles } from "@/components/Screen";
 import { api } from "@/lib/api";
 import { useHousehold } from "@/lib/household";
 import { useQuery } from "@tanstack/react-query";
-
-export default function Snapshots() {
-  const id = useHousehold((s) => s.householdId);
-
-  const q = useQuery({
-    queryKey: ["snapshots", id],
-    queryFn: () => api.snapshots(id!),
-    enabled: !!id,
-  });
-
-  return (
-    <Screen>
-      <Text style={styles.title}>Net worth history</Text>
-
-      <State loading={q.isLoading} error={q.error as Error} />
-
-      {q.data?.map((x: any) => (
-        <Text key={x.id} style={styles.card}>
-          {x.period_start} to {x.period_end}
-          {"\n"}
-          Net worth: {x.payload?.net_worth ?? "not available"}
-        </Text>
-      ))}
-    </Screen>
-  );
-}
+export default function Snapshots() { const id = useHousehold((s) => s.householdId); const q = useQuery({ queryKey: ["snapshots", id], queryFn: () => api.snapshots(id!), enabled: Boolean(id) }); return <Screen><Text style={styles.eyebrow}>LONG-TERM VIEW</Text><Text style={styles.title}>Net worth history</Text><Text style={styles.subtitle}>A dated view of how your household wealth changes over time.</Text><State loading={q.isLoading} error={q.error as Error}/>{q.data?.length ? q.data.map((x: any) => <View key={x.id} style={styles.historyCard}><View><Text style={styles.historyPeriod}>{x.period_start} — {x.period_end}</Text><Text style={styles.muted}>Verified financial snapshot</Text></View><Text style={styles.historyValue}>{x.payload?.net_worth ?? "—"}</Text></View>) : <View style={styles.infoCard}><Text style={styles.sectionTitle}>No snapshots yet</Text><Text style={styles.muted}>As your records grow, this timeline will show your financial direction.</Text></View>}</Screen>; }
